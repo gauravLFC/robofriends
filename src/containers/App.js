@@ -1,34 +1,49 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect} from 'react';
+import { connect } from 'react-redux';
 import CardList from '../components/CardList';
 import SearchBox from '../components/SearchBox';
 import Scroll from '../components/Scroll';
+import {requestRobots} from '../actions'
 import './App.css';
 
-const App = () => {
-    const [robots, setRobots] = useState([]);
-    const [searchField, setSearchField] = useState('');
-    const filteredRobots = robots.filter(robot => 
+const App = ({searchField, requestRobots, robotData: {isPending, robots, error}}) => {
+
+    useEffect(() => requestRobots(), [requestRobots]);
+
+    if(isPending){
+        return (
+            <h1>Loading...</h1>
+        )
+    }
+
+    else if (error){
+        return (
+            <h1>Some Error occurred while fetching data</h1>
+        )
+    }
+
+    else {
+        const filteredRobots = robots.filter(robot => 
         robot.name.toLowerCase().includes(searchField.toLowerCase()));
-
-    useEffect(() => {
-        async function fetchData(){
-            let res = await fetch('https://jsonplaceholder.typicode.com/users');
-            res = await res.json();
-            setRobots(res);
-        }
-        fetchData();
-    });
-
-    if(robots)
+        return (
+            <div className='tc'>
+                <h1 className='f1'>RoboFriends</h1>
+                <SearchBox/>
+                <Scroll><CardList robots= {filteredRobots}/></Scroll>
+                
+            </div>
+        );
+    }
     
-    return (
-        <div className='tc'>
-            <h1 className='f1'>RoboFriends</h1>
-            <SearchBox onChange = {e => setSearchField(e.target.value)}/>
-            <Scroll><CardList robots= {filteredRobots}/></Scroll>
-            
-        </div>
-    );
+    
 }
 
-export default App;
+const mapStateToProps = state => ({
+    searchField: state.searchRobots.searchField,
+    robotData: state.requestRobots
+});
+   
+
+export default connect(mapStateToProps, {
+    requestRobots
+})(App);
